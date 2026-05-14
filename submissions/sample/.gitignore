@@ -1,0 +1,11 @@
+*.pdf
+!submitted/*.pdf
+!review/*.pdf
+# .odg is the drawings format used by LibreOffice Draw
+*.odg
+
+*-blx.bib
+*.run.xml
+*.out
+*.bbl
+*.blg

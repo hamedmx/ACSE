@@ -1,0 +1,26 @@
+# Deep Learning & LLM Backend
+torch>=2.0.0
+transformers>=4.34.0
+accelerate>=0.23.0
+bitsandbytes>=0.41.0
+sentencepiece
+sentence-transformers
+datasets>=2.14.0
+
+# Core Data Science & Math
+numpy
+pandas
+scipy
+scikit-learn
+
+# NLP Utilities
+nltk
+
+# Visualization
+matplotlib
+seaborn
+
+# Utilities & Config
+tqdm
+python-dotenv
+pyyaml
