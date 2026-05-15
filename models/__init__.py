@@ -5,11 +5,13 @@ from .mistral_loader import MistralLoader
 from .falcon_loader import FalconLoader
 from .llama_loader import LlamaLoader
 from .qwen_loader import QwenLoader
+from .granite_loader import GraniteLoader
 
 __all__ = [
     "BaseLLMLoader",
     "MistralLoader",
     "FalconLoader",
     "LlamaLoader",
-    "QwenLoader"
+    "QwenLoader",
+    "GraniteLoader"
 ]
