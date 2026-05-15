@@ -3,37 +3,62 @@ from typing import List
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from .base_loader import BaseLLMLoader
 
+
 class QwenLoader(BaseLLMLoader):
     """
-    Implementation of the LLM Loader for Qwen-7B-Chat.
+    Unified Qwen Loader supporting:
+        - Qwen-7B-Chat
+        - Qwen-8B-Chat (or larger compatible chat variants)
+
+    This class standardizes prompt formatting and extraction across Qwen model sizes.
     """
 
-    def __init__(self, 
-                 model_name: str = "Qwen/Qwen-7B-Chat", 
-                 device: str = 'cuda'):
+    SUPPORTED_MODELS = {
+        "7b": "Qwen/Qwen-7B-Chat",
+        "8b": "Qwen/Qwen-8B-Chat"
+    }
+
+    def __init__(
+        self,
+        model_size: str = "7b",
+        device: str = "cuda"
+    ):
         """
-        Initializes the Qwen loader.
-        
         Args:
-            model_name (str): 'Qwen/Qwen-7B-Chat'.
-            device (str): Execution device.
+            model_size (str): "7b" or "8b"
+            device (str): execution device
         """
+
+        if model_size not in self.SUPPORTED_MODELS:
+            raise ValueError(
+                f"Unsupported Qwen model size: {model_size}. "
+                f"Supported: {list(self.SUPPORTED_MODELS.keys())}"
+            )
+
+        self.model_size = model_size
+        model_name = self.SUPPORTED_MODELS[model_size]
+
         super().__init__(model_name, device)
 
     def _load_model(self):
         """
-        Loads the Qwen-7B-Chat model and tokenizer from Hugging Face.
+        Loads Qwen tokenizer and model.
         """
+
         print(f"Loading {self.model_name} on {self.device}...")
 
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.model_name,
             trust_remote_code=True,
-            padding_side='left'
+            padding_side="left"
         )
 
+        # Qwen token handling
         if self.tokenizer.pad_token is None:
-            self.tokenizer.pad_token = self.tokenizer.eod_id
+            if hasattr(self.tokenizer, "eos_token") and self.tokenizer.eos_token:
+                self.tokenizer.pad_token = self.tokenizer.eos_token
+            elif hasattr(self.tokenizer, "eod_id"):
+                self.tokenizer.pad_token = self.tokenizer.eod_id
 
         self.model = AutoModelForCausalLM.from_pretrained(
             self.model_name,
@@ -44,25 +69,44 @@ class QwenLoader(BaseLLMLoader):
 
         self.model.eval()
 
-    def _generate_batch(self, prompt: str, n: int, top_p: float, temperature: float) -> List[str]:
+    def _format_prompt(self, prompt: str) -> str:
         """
-        Executes the stochastic generation process for a single prompt x to produce 
-        the response set Y(x) = {y_1, ..., y_n}.
-
-        Args:
-            prompt (str): The raw input query x.
-            n (int): Number of responses to sample.
-            top_p (float): Nucleus threshold eta.
-            temperature (float): Softmax temp T.
-
-        Returns:
-            List[str]: The set of n generated response strings.
+        Standardizes chat formatting across Qwen versions.
         """
-        formatted_prompt = f"<|im_start|>system\nYou are a helpful assistant.<|im_end|>\n<|im_start|>user\n{prompt}<|im_end|>\n<|im_start|>assistant\n"
+
+        return (
+            "<|im_start|>system\nYou are a helpful assistant.<|im_end|>\n"
+            f"<|im_start|>user\n{prompt}<|im_end|>\n"
+            "<|im_start|>assistant\n"
+        )
+
+    def _extract_response(self, text: str, formatted_prompt: str) -> str:
+        """
+        Extract assistant response robustly across model variants.
+        """
+
+        if "<|im_start|>assistant" in text:
+            response_part = text.split("<|im_start|>assistant")[-1]
+            return response_part.replace("<|im_end|>", "").strip()
+
+        return text.replace(formatted_prompt, "").strip()
+
+    def _generate_batch(
+        self,
+        prompt: str,
+        n: int,
+        top_p: float,
+        temperature: float
+    ) -> List[str]:
+        """
+        Generates n stochastic responses for a prompt.
+        """
+
+        formatted_prompt = self._format_prompt(prompt)
 
         inputs = self.tokenizer(
-            formatted_prompt, 
-            return_tensors="pt", 
+            formatted_prompt,
+            return_tensors="pt",
             padding=True
         ).to(self.model.device)
 
@@ -73,27 +117,24 @@ class QwenLoader(BaseLLMLoader):
             output_ids = self.model.generate(
                 input_ids=input_ids,
                 attention_mask=attention_mask,
-                do_sample=True,          
-                top_p=top_p,            
+                do_sample=True,
+                top_p=top_p,
                 temperature=temperature,
-                max_new_tokens=200,      
+                max_new_tokens=200,
                 pad_token_id=self.tokenizer.pad_token_id,
                 eos_token_id=self.tokenizer.eos_token_id
             )
 
         generated_texts = self.tokenizer.batch_decode(
-            output_ids, 
-            skip_special_tokens=False 
+            output_ids,
+            skip_special_tokens=False
         )
 
         responses = []
+
         for text in generated_texts:
-            if "<|im_start|>assistant" in text:
-                response_part = text.split("<|im_start|>assistant")[-1]
-                response_only = response_part.replace("<|im_end|>", "").strip()
-            else:
-                response_only = text.replace(formatted_prompt, "").strip()
-            
-            responses.append(response_only)
-            
+            responses.append(
+                self._extract_response(text, formatted_prompt)
+            )
+
         return responses
