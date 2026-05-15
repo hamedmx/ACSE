@@ -94,5 +94,14 @@ print(f"ACSE Score: {uncertainty_score}")
 
 ## Citation
 ```
-PLACEHOLDER
+@inproceedings{karimi2026llmuqadaptive,
+  title     = {{LLMs} Uncertainty Quantification via Adaptive Conformal Semantic Entropy},
+  author    = {Karimi, Hamed and Meyappan, Vaishali and Samavi, Reza},
+  booktitle = {Proceedings of the International Joint Conference on Artificial Intelligence (IJCAI)},
+  year      = {2026},
+  eprint    = {2605.04295},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.LG},
+  url       = {https://arxiv.org/abs/2605.04295}
+}
 ```
