@@ -91,3 +91,8 @@ print(f"ACSE Score: {uncertainty_score}")
 1. **HuggingFace Access**: Ensure you have a valid ```HF_TOKEN``` environment variable set for using gated models.
 2. **Hardware**: Inference requires approximately 16GB+ VRAM for 7B models in half-precision.
 3. **Deterministic Calibration**: While text generation is stochastic, the data splitting and calibration steps are seeded. Always use `--seed` argument (default: 42) to maintain the disjoint train/test splits across different runs.
+
+## Citation
+```
+PLACEHOLDER
+```
