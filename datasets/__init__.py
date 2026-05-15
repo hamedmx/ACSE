@@ -14,6 +14,6 @@ __all__ = [
     "CoQAHandler",
     "NQHandler",
     "TruthfulQAHandler",
-    "MMLUHandler"
+    "MMLUHandler",
     "SAMSumHandler"
 ]
