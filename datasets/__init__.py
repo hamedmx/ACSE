@@ -6,6 +6,7 @@ from .coqa_handler import CoQAHandler
 from .nq_handler import NQHandler
 from .truthfulqa_handler import TruthfulQAHandler
 from .mmlu_handler import MMLUHandler
+from .samsum_handler import SAMSumHandler
 
 __all__ = [
     "BaseDatasetHandler",
@@ -14,4 +15,5 @@ __all__ = [
     "NQHandler",
     "TruthfulQAHandler",
     "MMLUHandler"
+    "SAMSumHandler"
 ]
